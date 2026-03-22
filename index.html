@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz della Bibbia!</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap');
+
+        body {
+            font-family: 'Nunito', 'Comic Sans MS', sans-serif;
+            background-color: #87CEEB; /* Azzurro cielo */
+            background-image: radial-gradient(#ffffff 15%, transparent 16%), radial-gradient(#ffffff 15%, transparent 16%);
+            background-size: 60px 60px;
+            background-position: 0 0, 30px 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .game-container {
+            background-color: #FFF9E6; /* Giallo sabbia chiaro */
+            border-radius: 25px;
+            padding: 40px;
+            box-shadow: 0 15px 25px rgba(0,0,0,0.2);
+            max-width: 650px;
+            width: 100%;
+            text-align: center;
+            border: 8px solid #FFD700; /* Oro */
+            position: relative;
+        }
+
+        h1 {
+            color: #FF8C00; /* Arancione vivace */
+            font-size: 2.5em;
+            margin-top: 0;
+            text-shadow: 2px 2px 0px #FFF, 4px 4px 0px rgba(0,0,0,0.1);
+        }
+
+        .question-box {
+            background: #FFFFFF;
+            border: 4px dashed #87CEEB;
+            border-radius: 15px;
+            padding: 30px 20px;
+            margin: 20px 0;
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .question {
+            font-size: 1.6em;
+            color: #333;
+            font-weight: 800;
+            margin: 0;
+        }
+
+        .answer {
+            font-size: 1.5em;
+            color: #228B22; /* Verde foresta */
+            font-weight: 700;
+            background: #E0FFEA;
+            padding: 20px;
+            border-radius: 15px;
+            border: 3px solid #32CD32;
+            margin: 20px 0;
+            display: none; /* Nascosta di default */
+            animation: popIn 0.3s ease-out;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        @media (min-width: 500px) {
+            .controls {
+                flex-direction: row;
+                justify-content: center;
+            }
+        }
+
+        button {
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2em;
+            font-weight: 800;
+            font-family: inherit;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.1s;
+            color: white;
+            text-transform: uppercase;
+        }
+
+        .btn-toggle {
+            background-color: #FF6347; /* Tomato */
+            box-shadow: 0 6px 0 #CD5C5C;
+        }
+
+        .btn-toggle:active {
+            transform: translateY(6px);
+            box-shadow: none;
+        }
+
+        .btn-next {
+            background-color: #32CD32; /* Lime Green */
+            box-shadow: 0 6px 0 #228B22;
+        }
+
+        .btn-next:active {
+            transform: translateY(6px);
+            box-shadow: none;
+        }
+
+        .btn-next:disabled {
+            background-color: #A9A9A9;
+            box-shadow: 0 6px 0 #808080;
+            cursor: not-allowed;
+        }
+
+        .progress {
+            margin-top: 25px;
+            font-size: 1.1em;
+            color: #888;
+            font-weight: bold;
+        }
+
+        .end-message {
+            display: none;
+            color: #FF4500;
+            font-size: 2em;
+            font-weight: 900;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="game-container">
+        <h1>🌟 Quiz della Bibbia 🌟</h1>
+        
+        <div class="question-box">
+            <p id="questionText" class="question">Clicca su "Prossima Domanda" per iniziare!</p>
+        </div>
+
+        <div id="answerBox" class="answer">
+            </div>
+
+        <div id="endMessage" class="end-message">
+            Bravissimo! Hai completato tutte le domande! 🎉
+        </div>
+
+        <div class="controls">
+            <button id="btnToggle" class="btn-toggle" onclick="toggleAnswer()" style="display: none;">👀 Mostra Risposta</button>
+            <button id="btnNext" class="btn-next" onclick="nextQuestion()">➡️ Prossima Domanda</button>
+        </div>
+
+        <div class="progress" id="progressText">
+            Domande completate: 0 / 150
+        </div>
+    </div>
+
+    <script>
+        // Array completo delle 150 domande
+        const databaseDomande = [
+            { q: "Quanti anni visse Matusalemme?", a: "969." },
+            { q: "Chi fu il figlio maggiore di Noè?", a: "Sem." },
+            { q: "Chi fu la moglie di Isacco?", a: "Rebecca." },
+            { q: "Chi lottò con l’angelo fino all’alba?", a: "Giacobbe." },
+            { q: "Quale città fu distrutta insieme a Sodoma?", a: "Gomorra." },
+            { q: "Chi fu la madre di Samuele?", a: "Anna." },
+            { q: "Chi fu il sacerdote che allevò Samuele?", a: "Eli." },
+            { q: "Chi fu il gigante ucciso da Davide oltre a Golia?", a: "Isbi-Benob." },
+            { q: "Chi fu il profeta che unse Saul re?", a: "Samuele." },
+            { q: "Chi fu il re che costruì il secondo Tempio?", a: "Zorobabele." },
+            { q: "Chi fu il profeta che vide un carro di fuoco?", a: "Elia." },
+            { q: "Chi fu il profeta che guarì Naaman il Siro?", a: "Eliseo." },
+            { q: "Chi fu il re che trovò il libro della Legge nel Tempio?", a: "Giosia." },
+            { q: "Chi fu il profeta che vide il trono con i serafini?", a: "Isaia." },
+            { q: "Chi fu il profeta che vide quattro bestie salire dal mare?", a: "Daniele." },
+            { q: "Chi fu il profeta che sposò una donna adultera come segno?", a: "Osea." },
+            { q: "Chi fu il profeta che vide la lampada d’oro e gli ulivi?", a: "Zaccaria." },
+            { q: "Chi predisse la nascita del Messia a Betlemme?", a: "Michea." },
+            { q: "Chi fu il padre di Giovanni Battista?", a: "Zaccaria." },
+            { q: "Chi fu la profetessa che riconobbe Gesù nel Tempio?", a: "Anna." },
+            { q: "Chi fu il discepolo chiamato 'Boanerghes'?", a: "Giovanni." },
+            { q: "Chi portò il ragazzo con i pani e i pesci?", a: "Andrea." },
+            { q: "Chi era pubblicano tra i discepoli?", a: "Matteo." },
+            { q: "Chi tagliò l’orecchio al servo del sommo sacerdote?", a: "Pietro." },
+            { q: "Chi salì sul Monte della Trasfigurazione con Gesù?", a: "Pietro, Giacomo e Giovanni." },
+            { q: "Chi vide la visione del lenzuolo con gli animali?", a: "Pietro." },
+            { q: "Chi fu la prima convertita europea secondo Atti?", a: "Lidia." },
+            { q: "Chi cadde dalla finestra mentre Paolo predicava?", a: "Eutico." },
+            { q: "Chi era medico tra i compagni di Paolo?", a: "Luca." },
+            { q: "Chi fu il governatore che tremò ascoltando Paolo?", a: "Felice." },
+            { q: "Quanti anni aveva Abramo quando nacque Isacco?", a: "100." },
+            { q: "Chi fu il fratello di Mosè che parlava per lui?", a: "Aronne." },
+            { q: "Come si chiamava il suocero di Mosè?", a: "Ietro." },
+            { q: "Quale fu la prima piaga d’Egitto?", a: "L’acqua trasformata in sangue." },
+            { q: "Quanti giorni le spie esplorarono la Terra Promessa?", a: "40." },
+            { q: "Chi prese il posto di Mosè come guida di Israele?", a: "Giosuè." },
+            { q: "Chi fu la donna che nascose le spie a Gerico?", a: "Raab." },
+            { q: "Chi fu il giudice che sconfisse i Madianiti con 300 uomini?", a: "Gedeone." },
+            { q: "Chi fu la madre di Sansone?", a: "Una donna sterile della tribù di Dan." },
+            { q: "Chi fu il sacerdote che morì cadendo dalla sedia?", a: "Eli." },
+            { q: "Chi fu il profeta che unse Davide re?", a: "Samuele." },
+            { q: "Chi fu il figlio di Davide che si ribellò contro di lui?", a: "Assalonne." },
+            { q: "Chi fu il re che chiese una spada per dividere un bambino?", a: "Salomone." },
+            { q: "Chi costruì il primo Tempio di Gerusalemme?", a: "Salomone." },
+            { q: "Chi fu il profeta che vide il fuoco scendere sul sacrificio sul Carmelo?", a: "Elia." },
+            { q: "Chi fu il profeta che guarì le acque amare di Gerico?", a: "Eliseo." },
+            { q: "Chi fu il re che mostrò i suoi tesori ai messaggeri di Babilonia?", a: "Ezechia." },
+            { q: "Chi fu il profeta che vide una ruota dentro una ruota?", a: "Ezechiele." },
+            { q: "Chi fu il profeta che interpretò i sogni di Nabucodonosor?", a: "Daniele." },
+            { q: "Chi fu il profeta che fu gettato nella fossa dei leoni?", a: "Daniele." },
+            { q: "Chi fu il profeta che fuggì verso Tarsis?", a: "Giona." },
+            { q: "Chi fu il profeta che si rattristò per la pianta seccata dal verme?", a: "Giona." },
+            { q: "Chi fu il profeta che vide un ramo di mandorlo?", a: "Geremia." },
+            { q: "Chi fu il profeta che vide un cesto di fichi buoni e cattivi?", a: "Geremia." },
+            { q: "Chi fu il profeta che vide un muro misurato con filo a piombo?", a: "Amos." },
+            { q: "Chi fu il profeta che vide un cesto di frutta estiva?", a: "Amos." },
+            { q: "Chi fu il profeta che vide il sole oscurarsi e la luna in sangue?", a: "Gioele." },
+            { q: "Chi fu il profeta che vide un giorno grande e terribile del Signore?", a: "Gioele." },
+            { q: "Chi fu il profeta che vide un uomo con una corda da misurare?", a: "Zaccaria." },
+            { q: "Chi fu il profeta che vide una donna chiamata 'Malvagità' in una cesta?", a: "Zaccaria." },
+            { q: "Chi fu il re che vide la scritta 'Mene, Mene, Tekel, Peres'?", a: "Baldassar." },
+            { q: "Chi fu il re che gettò i tre giovani nella fornace ardente?", a: "Nabucodonosor." },
+            { q: "Chi furono i tre giovani nella fornace?", a: "Sadrac, Mesac e Abed-Nego." },
+            { q: "Chi fu il re che gettò Daniele nella fossa dei leoni?", a: "Dario." },
+            { q: "Chi fu il profeta che vide un fiume uscire dal Tempio?", a: "Ezechiele." },
+            { q: "Chi fu il profeta che mangiò un rotolo di libro?", a: "Ezechiele." },
+            { q: "Chi fu il profeta che vide un uomo con un calamaio alla cintura?", a: "Ezechiele." },
+            { q: "Chi fu il profeta che vide un altare spezzarsi come segno?", a: "Un profeta anonimo in 1 Re 13." },
+            { q: "Chi fu il profeta che vide un’ombra tornare indietro di dieci gradini?", a: "Isaia." },
+            { q: "Chi fu il profeta che vide un uomo con una bilancia in mano?", a: "Amos." },
+            { q: "Chi fu il profeta che vide un leone ruggire contro Israele?", a: "Amos." },
+            { q: "Chi fu il profeta che vide un uomo che scavava nel muro?", a: "Ezechiele." },
+            { q: "Chi fu il profeta che vide un carro con quattro ruote piene di occhi?", a: "Ezechiele." },
+            { q: "Chi fu il profeta che vide un libro scritto dentro e fuori?", a: "Ezechiele." },
+            { q: "Chi fu il profeta che vide un uomo con una spada sguainata davanti a Gerico?", a: "Giosuè." },
+            { q: "Chi fu il profeta che vide il Signore in una brezza leggera?", a: "Elia." },
+            { q: "Chi fu il profeta che vide il serpente di bronzo innalzato?", a: "Mosè." },
+            { q: "Chi fu il profeta che vide la nube che guidava Israele?", a: "Mosè." },
+            { q: "Chi fu il profeta che vide il bastone di Aronne fiorire?", a: "Mosè." },
+            { q: "Chi fu il profeta che vide la terra aprirsi e inghiottire Core?", a: "Mosè." },
+            { q: "Chi annunciò a Zaccaria la nascita di Giovanni Battista?", a: "L’arcangelo Gabriele." },
+            { q: "Chi annunciò a Maria la nascita di Gesù?", a: "L’arcangelo Gabriele." },
+            { q: "Chi fu il re che cercò di uccidere Gesù bambino?", a: "Erode." },
+            { q: "Chi fu il vecchio che prese Gesù in braccio nel Tempio?", a: "Simeone." },
+            { q: "Chi fu il discepolo che Gesù vide sotto il fico?", a: "Natanaele." },
+            { q: "Chi fu il discepolo che disse 'Mostraci il Padre'?", a: "Filippo." },
+            { q: "Chi fu il discepolo che disse 'Andiamo a morire con lui'?", a: "Tommaso." },
+            { q: "Chi fu il discepolo che teneva la borsa dei soldi?", a: "Giuda Iscariota." },
+            { q: "Chi fu il discepolo che corse più veloce al sepolcro?", a: "Giovanni." },
+            { q: "Chi fu il discepolo che camminò sulle acque verso Gesù?", a: "Pietro." },
+            { q: "Chi fu il primo martire cristiano?", a: "Stefano." },
+            { q: "Chi fu il giovane che fuggì nudo nell’arresto di Gesù?", a: "Marco." },
+            { q: "Chi fu il centurione che riconobbe Gesù come Figlio di Dio?", a: "Il centurione sotto la croce." },
+            { q: "Chi fu il governatore romano che interrogò Gesù?", a: "Ponzio Pilato." },
+            { q: "Chi fu il re che derise Gesù durante il processo?", a: "Erode Antipa." },
+            { q: "Chi fu il sommo sacerdote che profetizzò che Gesù sarebbe morto per il popolo?", a: "Caifa." },
+            { q: "Chi fu il fariseo che visitò Gesù di notte?", a: "Nicodemo." },
+            { q: "Chi fu la donna che toccò il mantello di Gesù ed è guarita?", a: "La donna con il flusso di sangue." },
+            { q: "Chi fu la donna che lavò i piedi di Gesù con le lacrime?", a: "Una donna peccatrice (Luca 7)." },
+            { q: "Chi fu la donna che ascoltava ai piedi di Gesù a Betania?", a: "Maria." },
+            { q: "Chi fu la donna che si preoccupava del servizio in casa?", a: "Marta." },
+            { q: "Chi fu l’uomo che salì su un sicomoro per vedere Gesù?", a: "Zaccheo." },
+            { q: "Chi fu l’uomo che portò la croce di Gesù?", a: "Simone di Cirene." },
+            { q: "Chi fu l’uomo che chiese il corpo di Gesù a Pilato?", a: "Giuseppe d’Arimatea." },
+            { q: "Chi fu l’uomo che aiutò Paolo a riavere la vista a Damasco?", a: "Anania." },
+            { q: "Chi fu il compagno di Paolo con cui ebbe un forte dissenso su Marco?", a: "Barnaba." },
+            { q: "Chi fu il giovane discepolo che Paolo prese con sé a Listra?", a: "Timoteo." },
+            { q: "Chi fu il discepolo che Paolo lasciò a Creta?", a: "Tito." },
+            { q: "Chi fu il discepolo che Paolo chiamò 'medico amato'?", a: "Luca." },
+            { q: "Chi fu l’apostolo che Paolo rimproverò ad Antiochia?", a: "Pietro." },
+            { q: "Chi fu il discepolo che Paolo mandò spesso a Corinto?", a: "Tito." },
+            { q: "Chi fu il discepolo che Paolo mandò ai Filippesi?", a: "Epafrodito." },
+            { q: "Chi fu il discepolo che Paolo mandò agli Efesini?", a: "Timoteo." },
+            { q: "Chi fu il discepolo che Paolo mandò ai Colossesi?", a: "Tichico." },
+            { q: "Chi fu il discepolo che Paolo definì 'utile al ministero'?", a: "Marco." },
+            { q: "Chi fu il discepolo che Paolo chiamò 'figlio mio nella fede'?", a: "Timoteo." },
+            { q: "Chi fu lo schiavo che Paolo rimandò al suo padrone Filemone?", a: "Onesimo." },
+            { q: "Chi fu il discepolo che Paolo chiamò 'compagno di prigionia'?", a: "Aristarco." },
+            { q: "Chi fu il discepolo che Paolo chiamò 'collaboratore'?", a: "Filemone." },
+            { q: "Chi fu il discepolo che Paolo chiamò 'fratello fedele'?", a: "Tichico." },
+            { q: "Chi fu il re che chiese un segno al profeta Isaia?", a: "Acaz." },
+            { q: "Chi fu il re che vide il sole tornare indietro come segno?", a: "Ezechia." },
+            { q: "Chi fu il re che fu colpito dai vermi e morì?", a: "Erode Agrippa." },
+            { q: "Chi fu il re che fece uccidere Giacomo, fratello di Giovanni?", a: "Erode Agrippa I." },
+            { q: "Chi fu il re che imprigionò Pietro e lo vide liberato dall’angelo?", a: "Erode Agrippa I." },
+            { q: "Chi fu il governatore che ascoltò Paolo insieme a sua moglie Drusilla?", a: "Felice." },
+            { q: "Chi fu il re che disse a Paolo: 'Per poco mi persuadi a diventare cristiano'?", a: "Agrippa II." },
+            { q: "Chi fu il governatore che lasciò Paolo in prigione per compiacere i Giudei?", a: "Felice." },
+            { q: "Chi fu il governatore che mandò Paolo a Roma?", a: "Festo." },
+            { q: "Chi fu il profeta che vide un uomo con una spada sguainata?", a: "Giosuè." },
+            { q: "Chi fu il profeta che vide un carro di fuoco che lo portò via?", a: "Elia." },
+            { q: "Chi fu il profeta che ricevette il mantello di Elia?", a: "Eliseo." },
+            { q: "Chi fu il profeta che vide un fiume che cresceva fino alle ginocchia, ai fianchi, poi da nuotare?", a: "Ezechiele." },
+            { q: "Chi fu il profeta che mangiò un libro che era dolce in bocca e amaro nel ventre?", a: "Ezechiele." },
+            { q: "Chi fu il profeta che vide un uomo con una corda da misurare che misurava Gerusalemme?", a: "Zaccaria." },
+            { q: "Chi fu il profeta che vide un cavallo rosso tra i mirti?", a: "Zaccaria." },
+            { q: "Chi fu il profeta che vide un grande albero abbattuto come simbolo di un re?", a: "Daniele." },
+            { q: "Chi fu il profeta che vide un ariete e un capro in visione?", a: "Daniele." },
+            { q: "Chi fu il profeta che vide un uomo vestito di lino sulle acque del fiume?", a: "Daniele." },
+            { q: "Chi fu il profeta che vide il Signore seduto su un trono alto ed elevato?", a: "Isaia." },
+            { q: "Chi fu il profeta che vide il carbone ardente toccare le sue labbra?", a: "Isaia." },
+            { q: "Chi fu il profeta che vide la valle piena di ossa aride?", a: "Ezechiele." },
+            { q: "Chi fu il profeta che vide il Signore come uno sposo che gioisce per la sposa?", a: "Isaia." },
+            { q: "Chi fu il profeta che vide il giorno del Signore come fuoco purificatore?", a: "Malachia." },
+            { q: "Chi fu il profeta che vide il Signore come un leone che rugge da Sion?", a: "Amos." },
+            { q: "Chi fu il profeta che vide il Signore come un giudice che siede per giudicare le nazioni?", a: "Gioele." },
+            { q: "Chi fu il profeta che vide il Signore come un pastore che raduna il gregge?", a: "Michea." },
+            { q: "Chi fu il profeta che vide il Signore come un marito tradito ma fedele?", a: "Osea." },
+            { q: "Chi fu il profeta che vide il Signore come un fuoco che brucia nel cuore?", a: "Geremia." },
+            { q: "Chi fu il profeta che vide il Signore come un’aquila che porta i suoi figli?", a: "Mosè." }
+        ];
+
+        let domandeDisponibili = [...databaseDomande];
+        let domandeRisposte = 0;
+        let rispostaVisibile = false;
+
+        const questionText = document.getElementById("questionText");
+        const answerBox = document.getElementById("answerBox");
+        const btnToggle = document.getElementById("btnToggle");
+        const btnNext = document.getElementById("btnNext");
+        const progressText = document.getElementById("progressText");
+        const endMessage = document.getElementById("endMessage");
+
+        function nextQuestion() {
+            if (domandeDisponibili.length === 0) {
+                // Se abbiamo finito le domande
+                questionText.innerText = "Hai finito le domande!";
+                btnToggle.style.display = "none";
+                btnNext.style.display = "none";
+                answerBox.style.display = "none";
+                endMessage.style.display = "block";
+                return;
+            }
+
+            // Nascondi la risposta e resetta il bottone toggle
+            rispostaVisibile = false;
+            answerBox.style.display = "none";
+            btnToggle.innerText = "👀 Mostra Risposta";
+            btnToggle.style.display = "inline-block";
+
+            // Scegli una domanda a caso
+            const indiceCasuale = Math.floor(Math.random() * domandeDisponibili.length);
+            const domandaScelta = domandeDisponibili[indiceCasuale];
+
+            // Rimuovi la domanda dall'array in modo da non ripescarla
+            domandeDisponibili.splice(indiceCasuale, 1);
+
+            // Aggiorna l'interfaccia
+            questionText.innerText = domandaScelta.q;
+            answerBox.innerText = domandaScelta.a;
+
+            // Aggiorna contatore
+            domandeRisposte++;
+            progressText.innerText = `Domande completate: ${domandeRisposte} / ${databaseDomande.length}`;
+        }
+
+        function toggleAnswer() {
+            rispostaVisibile = !rispostaVisibile;
+            if (rispostaVisibile) {
+                answerBox.style.display = "block";
+                btnToggle.innerText = "🙈 Nascondi Risposta";
+            } else {
+                answerBox.style.display = "none";
+                btnToggle.innerText = "👀 Mostra Risposta";
+            }
+        }
+    </script>
+</body>
+</html>
